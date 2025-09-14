@@ -1,0 +1,207 @@
+// -------------------------------
+// Datasource & Generator
+// -------------------------------
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -------------------------------
+// Enums
+// -------------------------------
+enum IssuePriority {
+  LOW
+  MEDIUM
+  CRITICAL
+}
+
+enum IssueStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum ImageFormat {
+  PNG
+  JPEG
+  WEBP
+}
+
+enum InvoiceFormat {
+  PDF
+}
+
+// -------------------------------
+// Core Models
+// -------------------------------
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phoneNo   String?  @db.VarChar(15)
+  password  String
+  role      String   @default("USER") // extendable
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relations
+  issues    Issue[]  @relation("UserIssues")
+  issueUpdates IssueUpdate[] @relation("UserUpdates")
+}
+
+model Department {
+  id             String   @id @default(uuid())
+  name           String
+  email          String   @unique
+  password       String
+  maxFund        Float    @default(0)
+  availableFund  Float    @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // relations
+  issues         Issue[]        @relation("DeptIssues")
+  fundUpdates    FundUpdate[]
+  updatedIssues  Issue[]        @relation("DeptUpdatedIssues")
+  updateIssues IssueUpdate[] @relation("DeptUpdates")
+}
+
+model SuperAdmin {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relations
+  updatedIssues Issue[] @relation("AdminUpdatedIssues")
+  issueUpdates IssueUpdate[] @relation("AdminUpdates")
+}
+
+// -------------------------------
+// Issue Tracking
+// -------------------------------
+model Issue {
+  id          String        @id @default(uuid())
+  title       String
+  description String
+  tags        String[]
+  priority    IssuePriority @default(MEDIUM)
+  status      IssueStatus   @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  departmentId String?
+  raisedById   String?
+  updatedById  String?
+
+  // relations
+  department   Department?  @relation("DeptIssues", fields: [departmentId], references: [id])
+  raisedBy     User?        @relation("UserIssues", fields: [raisedById], references: [id])
+  updatedByAdmin   SuperAdmin?  @relation("AdminUpdatedIssues", fields: [updatedById], references: [id], map: "Issue_updatedByAdminId_fkey")
+  updatedByDept    Department?  @relation("DeptUpdatedIssues", fields: [updatedById], references: [id], map: "Issue_updatedByDeptId_fkey")
+
+  updates      IssueUpdate[]
+  images       IssueImage[] // ✅ images only
+
+  fundUpdates  FundUpdate[] // relation to FundUpdate
+}
+
+model IssueImage {
+  id         String      @id @default(uuid())
+  issueId    String
+  imageUrl   String
+  format     ImageFormat
+  fileSizeKB Int?
+  uploadedAt DateTime    @default(now())
+
+  // relation
+  issue      Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+}
+
+model IssueUpdate {
+  id             String       @id @default(uuid())
+  issueId        String
+  message        String
+  dateTime       DateTime     @default(now())
+  updatedByUserId String?
+  updatedByDeptId String?
+  updatedByAdminId String?
+
+  // relations
+  issue          Issue        @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  updatedBy      User?        @relation("UserUpdates", fields: [updatedByUserId], references: [id])
+  updatedByDept  Department?  @relation("DeptUpdates", fields: [updatedByDeptId], references: [id])
+  updatedByAdmin SuperAdmin?  @relation("AdminUpdates", fields: [updatedByAdminId], references: [id])
+}
+
+
+
+// -------------------------------
+// Fund Tracking
+// -------------------------------
+model FundUpdate {
+  id           String     @id @default(uuid())
+  departmentId String
+  issueId      String?
+  message      String
+  spend        Boolean    @default(false) // true = spend, false = credit
+  source       String
+  createdAt    DateTime   @default(now())
+
+  // relations
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  issue        Issue?     @relation(fields: [issueId], references: [id], onDelete: SetNull)
+  invoices     FundInvoice[]
+}
+
+model FundInvoice {
+  id           String        @id @default(uuid())
+  fundUpdateId String
+  invoiceUrl   String
+  format       InvoiceFormat @default(PDF)
+  fileSizeKB   Int?
+  uploadedAt   DateTime      @default(now())
+
+  // relation
+  fundUpdate   FundUpdate @relation(fields: [fundUpdateId], references: [id], onDelete: Cascade)
+}
+
+// -------------------------------
+// Stats and Analytics
+// -------------------------------
+model Analytics {
+  id               String   @id @default(uuid())
+  totalIssues      Int      @default(0)
+  resolvedIssues   Int      @default(0)
+  pendingIssues    Int      @default(0)
+  inProgressIssues Int      @default(0)
+
+  totalFunds       Float    @default(0)
+  spentFunds       Float    @default(0)
+  remainingFunds   Float    @default(0)
+
+  updatedAt        DateTime @updatedAt
+
+  // relations
+  monthlyStats     MonthlyAnalytics[]
+}
+
+model MonthlyAnalytics {
+  id             String   @id @default(uuid())
+  year           Int
+  month          Int      // 1-12
+  issuesRaised   Int      @default(0)
+  issuesResolved Int      @default(0)
+
+  analyticsId    String
+  analytics      Analytics @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+
+  @@unique([year, month, analyticsId])
+}
