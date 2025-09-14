@@ -6,6 +6,7 @@ import {
   getIssueById,
   updateIssueStatus,
   addIssueUpdate,
+  updateIssue
 } from "../controllers/issue.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/upload.middleware.js";
@@ -45,5 +46,12 @@ router.post(
   protect(["DEPARTMENT", "ADMIN"]),
   addIssueUpdate
 );
+
+router.patch(
+  "/:id",
+  protect(["DEPARTMENT", "ADMIN"]),
+  updateIssue
+);
+
 
 export default router;

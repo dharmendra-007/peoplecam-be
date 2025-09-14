@@ -140,3 +140,29 @@ export const addIssueUpdate = async (req, res, next) => {
   }
 };
 
+// controllers/issue.controller.js
+// ✅ Update Issue (general update)
+export const updateIssue = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    const issue = await prisma.issue.update({
+      where: { id },
+      data: updates,
+      include: {
+        raisedBy: { select: { id: true, name: true, email: true } },
+        department: { select: { id: true, name: true } },
+        images: true,
+      },
+    });
+
+    res.status(200).json({
+      status: "Success",
+      message: "Issue updated successfully",
+      data: issue,
+    });
+  } catch (err) {
+    next(err);
+  }
+};

@@ -46,7 +46,6 @@ export const addFundUpdate = async (req, res, next) => {
       spend === "true"
         ? dept.availableFund - parsedAmount
         : dept.availableFund + parsedAmount;
-
     await prisma.department.update({
       where: { id: departmentId },
       data: { availableFund: newAvailableFund },
