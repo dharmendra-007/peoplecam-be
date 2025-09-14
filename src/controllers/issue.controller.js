@@ -62,7 +62,8 @@ export const getAllIssues = async (req, res, next) => {
     const issues = await prisma.issue.findMany({
       include: {
         raisedBy: { select: { id: true, name: true, email: true } },
-        department: { select: { id: true, name: true } }
+        department: { select: { id: true, name: true } },
+        images : {select : {imageUrl : true}}
       },
     });
 
