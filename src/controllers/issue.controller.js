@@ -6,16 +6,11 @@ import { APIError } from "../middlewares/error.middleware.js";
 // ✅ Create Issue
 export const createIssue = async (req, res, next) => {
   try {
-    const { title, description, tags, priority, departmentId , lat , long } = req.body;
+    const { title, description, tags, priority, departmentId, lat, lng } = req.body; // Changed 'long' to 'lng'
     const userId = req.user.id;
 
-    if (!title || !description || !priority || !departmentId || !lat || !long) {
-      throw new APIError("Title, description, priority, lat, long and department are required", 400);
-    }
-
-    let imageUrl = null;
-    if (req.file) {
-      imageUrl = await uploadFile(req.file, "issues");
+    if (!title || !description || !priority || !departmentId || !lat || !lng) { // Changed 'long' to 'lng'
+      throw new APIError("Title, description, priority, lat, lng and department are required", 400); // Updated error message
     }
 
     const issue = await prisma.issue.create({
@@ -24,18 +19,20 @@ export const createIssue = async (req, res, next) => {
         description,
         tags: tags ? tags.split(",") : [],
         priority,
-        raisedById: userId, // ✅ direct FK is allowed
-        departmentId,       // ✅ direct FK is allowed
+        raisedById: userId, // ✅ This should work with your schema
+        departmentId,       // ✅ This should work with your schema
         lat,
-        long,
+        lng,                // ✅ Changed from 'long' to 'lng'
         images: req.file
           ? {
-            create: {
-              imageUrl: await uploadFile(req.file, "issues"),
-              format: "PNG", // or infer from file.mimetype
-              fileSizeKB: Math.round(req.file.size / 1024),
-            },
-          }
+              create: {
+                imageUrl: await uploadFile(req.file, "issues"),
+                format: req.file.mimetype === 'image/jpeg' ? 'JPEG' : 
+                        req.file.mimetype === 'image/png' ? 'PNG' : 
+                        req.file.mimetype === 'image/webp' ? 'WEBP' : 'JPEG', // Infer format from mimetype
+                fileSizeKB: Math.round(req.file.size / 1024),
+              },
+            }
           : undefined,
       },
       include: {
@@ -44,7 +41,6 @@ export const createIssue = async (req, res, next) => {
         images: true,
       },
     });
-
 
     res.status(201).json({
       status: "Success",
