@@ -9,9 +9,14 @@ import fundRouter from "./routes/fund.route.js";
 import issueRouter from "./routes/issue.route.js";
 
 dotenv.config()
-cors()
 
 const app = express()
+app.use(cors({
+    origin: "http://localhost:3000",  // ✅ your frontend origin
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}))
 const PORT = process.env.PORT || 8000
 
 // middlewares
@@ -19,11 +24,11 @@ app.use(express.json())
 app.use(express.urlencoded())
 
 // routes
-app.use("/api/v1/auth" , authRouter)
-app.use("/api/v1/admin" , adminRouter)
-app.use("/api/v1/dept" , deptRouter)
-app.use("/api/v1/fund" , fundRouter)
-app.use("/api/v1/issue" , issueRouter)
+app.use("/api/v1/auth", authRouter)
+app.use("/api/v1/admin", adminRouter)
+app.use("/api/v1/dept", deptRouter)
+app.use("/api/v1/fund", fundRouter)
+app.use("/api/v1/issue", issueRouter)
 
 // app.use("/" , (req , res) => {
 //     return res.status(200).json({
@@ -36,6 +41,6 @@ app.use("/api/v1/issue" , issueRouter)
 // global error handler
 app.use(globalErrorHandler)
 
-app.listen(PORT , () => {
+app.listen(PORT, () => {
     console.log(`App is listening at PORT : ${PORT}`)
 })
