@@ -12,6 +12,7 @@ dotenv.config()
 cors()
 
 const app = express()
+const PORT = process.env.PORT || 8000
 
 // middlewares
 app.use(express.json())
@@ -35,4 +36,6 @@ app.use("/api/v1/issue" , issueRouter)
 // global error handler
 app.use(globalErrorHandler)
 
-export default app
+app.listen(PORT , () => {
+    console.log(`App is listening at PORT : ${PORT}`)
+})
