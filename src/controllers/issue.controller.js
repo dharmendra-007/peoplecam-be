@@ -6,11 +6,11 @@ import { APIError } from "../middlewares/error.middleware.js";
 // ✅ Create Issue
 export const createIssue = async (req, res, next) => {
   try {
-    const { title, description, tags, priority, departmentId } = req.body;
+    const { title, description, tags, priority, departmentId , lat , long } = req.body;
     const userId = req.user.id;
 
-    if (!title || !description || !priority || !departmentId) {
-      throw new APIError("Title, description, priority, and department are required", 400);
+    if (!title || !description || !priority || !departmentId || !lat || !long) {
+      throw new APIError("Title, description, priority, lat, long and department are required", 400);
     }
 
     let imageUrl = null;
@@ -26,6 +26,8 @@ export const createIssue = async (req, res, next) => {
         priority,
         raisedById: userId, // ✅ direct FK is allowed
         departmentId,       // ✅ direct FK is allowed
+        lat,
+        long,
         images: req.file
           ? {
             create: {
@@ -60,7 +62,7 @@ export const getAllIssues = async (req, res, next) => {
     const issues = await prisma.issue.findMany({
       include: {
         raisedBy: { select: { id: true, name: true, email: true } },
-        department: { select: { id: true, name: true } },
+        department: { select: { id: true, name: true } }
       },
     });
 

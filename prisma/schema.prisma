@@ -50,25 +50,25 @@ model User {
   updatedAt DateTime @updatedAt
 
   // relations
-  issues    Issue[]  @relation("UserIssues")
+  issues       Issue[]       @relation("UserIssues")
   issueUpdates IssueUpdate[] @relation("UserUpdates")
 }
 
 model Department {
-  id             String   @id @default(uuid())
-  name           String
-  email          String   @unique
-  password       String
-  maxFund        Float    @default(0)
-  availableFund  Float    @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  password      String
+  maxFund       Float    @default(0)
+  availableFund Float    @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // relations
-  issues         Issue[]        @relation("DeptIssues")
-  fundUpdates    FundUpdate[]
-  updatedIssues  Issue[]        @relation("DeptUpdatedIssues")
-  updateIssues IssueUpdate[] @relation("DeptUpdates")
+  issues        Issue[]       @relation("DeptIssues")
+  fundUpdates   FundUpdate[]
+  updatedIssues Issue[]       @relation("DeptUpdatedIssues")
+  updateIssues  IssueUpdate[] @relation("DeptUpdates")
 }
 
 model SuperAdmin {
@@ -80,8 +80,8 @@ model SuperAdmin {
   updatedAt DateTime @updatedAt
 
   // relations
-  updatedIssues Issue[] @relation("AdminUpdatedIssues")
-  issueUpdates IssueUpdate[] @relation("AdminUpdates")
+  updatedIssues Issue[]       @relation("AdminUpdatedIssues")
+  issueUpdates  IssueUpdate[] @relation("AdminUpdates")
 }
 
 // -------------------------------
@@ -96,21 +96,23 @@ model Issue {
   status      IssueStatus   @default(PENDING)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+  lat         String        @default("21.4669")
+  lng         String        @default("83.9812")
 
   departmentId String?
   raisedById   String?
   updatedById  String?
 
   // relations
-  department   Department?  @relation("DeptIssues", fields: [departmentId], references: [id])
-  raisedBy     User?        @relation("UserIssues", fields: [raisedById], references: [id])
-  updatedByAdmin   SuperAdmin?  @relation("AdminUpdatedIssues", fields: [updatedById], references: [id], map: "Issue_updatedByAdminId_fkey")
-  updatedByDept    Department?  @relation("DeptUpdatedIssues", fields: [updatedById], references: [id], map: "Issue_updatedByDeptId_fkey")
+  department     Department? @relation("DeptIssues", fields: [departmentId], references: [id])
+  raisedBy       User?       @relation("UserIssues", fields: [raisedById], references: [id])
+  updatedByAdmin SuperAdmin? @relation("AdminUpdatedIssues", fields: [updatedById], references: [id], map: "Issue_updatedByAdminId_fkey")
+  updatedByDept  Department? @relation("DeptUpdatedIssues", fields: [updatedById], references: [id], map: "Issue_updatedByDeptId_fkey")
 
-  updates      IssueUpdate[]
-  images       IssueImage[] // ✅ images only
+  updates IssueUpdate[]
+  images  IssueImage[] // ✅ images only
 
-  fundUpdates  FundUpdate[] // relation to FundUpdate
+  fundUpdates FundUpdate[] // relation to FundUpdate
 }
 
 model IssueImage {
@@ -122,43 +124,41 @@ model IssueImage {
   uploadedAt DateTime    @default(now())
 
   // relation
-  issue      Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
 }
 
 model IssueUpdate {
-  id             String       @id @default(uuid())
-  issueId        String
-  message        String
-  dateTime       DateTime     @default(now())
-  updatedByUserId String?
-  updatedByDeptId String?
+  id               String   @id @default(uuid())
+  issueId          String
+  message          String
+  dateTime         DateTime @default(now())
+  updatedByUserId  String?
+  updatedByDeptId  String?
   updatedByAdminId String?
 
   // relations
-  issue          Issue        @relation(fields: [issueId], references: [id], onDelete: Cascade)
-  updatedBy      User?        @relation("UserUpdates", fields: [updatedByUserId], references: [id])
-  updatedByDept  Department?  @relation("DeptUpdates", fields: [updatedByDeptId], references: [id])
-  updatedByAdmin SuperAdmin?  @relation("AdminUpdates", fields: [updatedByAdminId], references: [id])
+  issue          Issue       @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  updatedBy      User?       @relation("UserUpdates", fields: [updatedByUserId], references: [id])
+  updatedByDept  Department? @relation("DeptUpdates", fields: [updatedByDeptId], references: [id])
+  updatedByAdmin SuperAdmin? @relation("AdminUpdates", fields: [updatedByAdminId], references: [id])
 }
-
-
 
 // -------------------------------
 // Fund Tracking
 // -------------------------------
 model FundUpdate {
-  id           String     @id @default(uuid())
+  id           String   @id @default(uuid())
   departmentId String
   issueId      String?
   message      String
-  spend        Boolean    @default(false) // true = spend, false = credit
+  spend        Boolean  @default(false) // true = spend, false = credit
   source       String
-  createdAt    DateTime   @default(now())
+  createdAt    DateTime @default(now())
 
   // relations
-  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  issue        Issue?     @relation(fields: [issueId], references: [id], onDelete: SetNull)
-  invoices     FundInvoice[]
+  department Department    @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  issue      Issue?        @relation(fields: [issueId], references: [id], onDelete: SetNull)
+  invoices   FundInvoice[]
 }
 
 model FundInvoice {
@@ -170,38 +170,38 @@ model FundInvoice {
   uploadedAt   DateTime      @default(now())
 
   // relation
-  fundUpdate   FundUpdate @relation(fields: [fundUpdateId], references: [id], onDelete: Cascade)
+  fundUpdate FundUpdate @relation(fields: [fundUpdateId], references: [id], onDelete: Cascade)
 }
 
 // -------------------------------
 // Stats and Analytics
 // -------------------------------
 model Analytics {
-  id               String   @id @default(uuid())
-  totalIssues      Int      @default(0)
-  resolvedIssues   Int      @default(0)
-  pendingIssues    Int      @default(0)
-  inProgressIssues Int      @default(0)
+  id               String @id @default(uuid())
+  totalIssues      Int    @default(0)
+  resolvedIssues   Int    @default(0)
+  pendingIssues    Int    @default(0)
+  inProgressIssues Int    @default(0)
 
-  totalFunds       Float    @default(0)
-  spentFunds       Float    @default(0)
-  remainingFunds   Float    @default(0)
+  totalFunds     Float @default(0)
+  spentFunds     Float @default(0)
+  remainingFunds Float @default(0)
 
-  updatedAt        DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 
   // relations
-  monthlyStats     MonthlyAnalytics[]
+  monthlyStats MonthlyAnalytics[]
 }
 
 model MonthlyAnalytics {
-  id             String   @id @default(uuid())
+  id             String @id @default(uuid())
   year           Int
-  month          Int      // 1-12
-  issuesRaised   Int      @default(0)
-  issuesResolved Int      @default(0)
+  month          Int // 1-12
+  issuesRaised   Int    @default(0)
+  issuesResolved Int    @default(0)
 
-  analyticsId    String
-  analytics      Analytics @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+  analyticsId String
+  analytics   Analytics @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
 
   @@unique([year, month, analyticsId])
 }

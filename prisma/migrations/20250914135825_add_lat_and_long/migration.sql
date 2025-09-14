@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "public"."Issue" ADD COLUMN     "lat" TEXT NOT NULL DEFAULT '21.4669',
+ADD COLUMN     "lng" TEXT NOT NULL DEFAULT '83.9812';
